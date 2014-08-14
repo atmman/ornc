@@ -35,6 +35,9 @@ def start_task(parameters):
                   'targets': '...',
                   'port_list': '...',
                   'config_type': '...'
+                  'progress_callback'
+                  'error_callback': func
+                  'success_callback': func
                  }
     '''
     if type(parameters) != type(dict()):
@@ -81,6 +84,9 @@ def start_task(parameters):
         print 'Error: None scan configuretion type parameter'
         sys.exit()
     print 'Scan config: %s' % config_type
+
+    #Callback functions
+
 
     manager = OpenvasClient(host=manager_host, port=manager_port)
     manager.open_session(user)
