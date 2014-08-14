@@ -129,17 +129,13 @@ def on_success_test(manager, report_id):
 
 
 if __name__ == '__main__':
-    
+#TODO: test it!!
     test_param = {
                     'manager_host': '10.10.133.227',
                     'user' : ('test_admin', 'admin'),
-                    'targets': '''10.10.133.1,
-                                10.10.133.2,
-                                10.10.133.3,
-                                10.10.133.4,
-                                10.10.133.11,
-                                10.10.133.21''',
-                    'config_type': CONFIG_TYPES.full_n_fast
+                    'targets': '10.10.133.1',
+                    'config_type': CONFIG_TYPES.full_n_fast,
+                    'success_callback': on_success_test()
                  }
     
     start_task(test_param)
