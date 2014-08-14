@@ -1,5 +1,5 @@
-from OpenvasClient import OpenvasClient
-from ReportParser import ReportParser
+from openvas_client import OpenvasClient
+from report_parser import ReportParser
 import time, os, sys
 
 
