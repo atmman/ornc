@@ -130,6 +130,7 @@ def on_success_test(manager, report_id):
 
 if __name__ == '__main__':
 #TODO: test it!!
+#sasasa
     test_param = {
                     'manager_host': '10.10.133.227',
                     'user' : ('test_admin', 'admin'),
