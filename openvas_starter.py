@@ -35,7 +35,7 @@ def start_task(parameters):
                   'targets': '...',
                   'port_list': '...',
                   'config_type': '...'
-                  'progress_callback'
+                  'progress_callback': func
                   'error_callback': func
                   'success_callback': func
                  }
@@ -86,7 +86,12 @@ def start_task(parameters):
     print 'Scan config: %s' % config_type
 
     #Callback functions
-
+    on_success = parameters.get('success_callback')
+    if not on_success:
+        print 'Error: None success callback-function parameter'
+        sys.exit()
+    on_error = parameters.get('error_callback')
+    on_progress = parameters.get('progress_callback')
 
     manager = OpenvasClient(host=manager_host, port=manager_port)
     manager.open_session(user)
@@ -103,15 +108,15 @@ def start_task(parameters):
     manager.wait_task(new_task_id, on_success, on_error, on_progress)
 
 
-def on_error(error):
+def on_error_test(error):
     print error
 
 
-def on_progress(progress):
+def on_progress_test(progress):
     print '%s%%' % progress
 
     
-def on_success(manager, report_id):
+def on_success_test(manager, report_id):
     report = manager.get_report_xml(report_id)
     
     parser = ReportParser()
