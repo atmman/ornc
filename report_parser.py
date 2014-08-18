@@ -43,12 +43,12 @@ class ReportParser():
                 host = self.__xpath_host(result)[0].text
                 row_cpe_str = self.__xpath_description(result)[0].text #row_cpe_str field contain cpe lines
                 row_cpe_list = row_cpe_str.strip().splitlines()
-                #TODO: extract method
 
+                #TODO: extract method
                 for cpe_item in row_cpe_list:
-                    splited_line = cpe_item.split('|')[1] #cpe line format: 'ip-address|cpeid#port', example: '192.168.1.1|cpe:/a:nginx:nginx:0.7.67#80'
-                                                      #splited_line = 'cpe:/a:nginx:nginx:0.7.67#80'
-                    cpe = splited_line.split('#')     #cpe = ['cpe:/a:nginx:nginx:0.7.67', '80']
+                    splited_cpe_item = cpe_item.split('|')[1] #cpe line format: 'ip-address|cpeid#port', example: '192.168.1.1|cpe:/a:nginx:nginx:0.7.67#80'
+                                                      #splited_cpe_item = 'cpe:/a:nginx:nginx:0.7.67#80'
+                    cpe = splited_cpe_item.split('#')     #cpe = ['cpe:/a:nginx:nginx:0.7.67', '80']
                     if len(cpe) < 2:
                         cpe.append(None)
 
@@ -81,13 +81,13 @@ class ReportParser():
                         if not parsed_report_dict.get(host):
                             parsed_report_dict[host] = dict(cpe_list=list(), cve_list=list())
                         parsed_report_dict[host]['cve_list'].append({'cve': cve,
-                                                                             'cve_description': test_name,
-                                                                             'service_name': service_name,
-                                                                             'port': port,
-                                                                             'protocol': protocol,
-                                                                             'cpe': None,
-                                                                             'possible_cpe': None,
-                                                                             'source_type': 'scan'})
+                                                                     'cve_description': test_name,
+                                                                     'service_name': service_name,
+                                                                     'port': port,
+                                                                     'protocol': protocol,
+                                                                     'cpe': None,
+                                                                     'possible_cpe': None,
+                                                                     'source_type': 'scan'})
             result.clear()
         del result_elements
         
