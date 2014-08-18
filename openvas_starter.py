@@ -136,7 +136,7 @@ if __name__ == '__main__':
                     'targets': '10.10.133.1',
                     'config_type': CONFIG_TYPES.full_n_fast,
                     'success_callback': on_success_test,
-                    'error_callback': on_error_test
+                    'progress_callback': on_progress_test
                  }
     
     start_task(test_param)
