@@ -5,13 +5,14 @@ from svdb.vuln.db_reader import DB
 
 class ReportParser():
 
-    __xpath_name = etree.XPath("child::nvt/child::name")
+    __xpath_test_name = etree.XPath("child::nvt/child::name")
     __xpath_host = etree.XPath("child::host")
     __xpath_description = etree.XPath("child::description")
     __xpath_cve = etree.XPath("child::nvt/child::cve")
     __xpath_port = etree.XPath("child::port")
 
     def parse_report(self, report):
+        cpe_detection_test = "CPE detection"
         '''
         This function return dictionary.
         Output data structure:
@@ -34,18 +35,19 @@ class ReportParser():
     
         for event, result in result_elements:
             try:
-                name = self.__xpath_name(result)[0].text
+                test_name = self.__xpath_test_name(result)[0].text
             except:
                 continue
             
-            if name == "CPE detection":
+            if test_name == cpe_detection_test:
                 host = self.__xpath_host(result)[0].text
                 description = self.__xpath_description(result)[0].text #description field contain cpe lines
+                row_cpe_list = description.strip().splitlines()
                 #TODO: extract method
-                print description.splitlines()
-                for line in description.splitlines():
+
+                for cpe_line in row_cpe_list:
                     try:
-                        splited_line = line.split('|')[1] #cpe line format: 'ip-address|cpeid#port', example: '192.168.1.1|cpe:/a:nginx:nginx:0.7.67#80' 
+                        splited_line = cpe_line.split('|')[1] #cpe line format: 'ip-address|cpeid#port', example: '192.168.1.1|cpe:/a:nginx:nginx:0.7.67#80'
                                                           #splited_line = 'cpe:/a:nginx:nginx:0.7.67#80' 
                         cpe = splited_line.split('#')     #cpe = ['cpe:/a:nginx:nginx:0.7.67', '80']
                         if len(cpe) < 2:
@@ -66,6 +68,7 @@ class ReportParser():
                                                                            #examples: 'ssh (21/tcp)', 'general/icmp'
                                                                            #after spliting: service = ['ssh', '(21/tcp)'] or service = ['general/icmp']
                     cves = cve_str.split(', ')
+                    print cve_str.split()
                     
                     if len(service) > 1:                    #like first examlpe
                         service_name = service[0]
@@ -80,7 +83,7 @@ class ReportParser():
                         if not parsed_report_dict.get(host):
                             parsed_report_dict[host] = dict(cpe_list=list(), cve_list=list())
                         parsed_report_dict[host]['cve_list'].append({'cve': cve,
-                                                                             'cve_description': name,
+                                                                             'cve_description': test_name,
                                                                              'service_name': service_name,
                                                                              'port': port,
                                                                              'protocol': protocol,
