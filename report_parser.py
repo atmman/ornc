@@ -6,11 +6,13 @@ xpath_test_name = etree.XPath("child::nvt/child::name")
 xpath_host = etree.XPath("child::host")
 xpath_description = etree.XPath("child::description")
 xpath_cve = etree.XPath("child::nvt/child::cve")
-xpath_port = etree.XPath("child::port")
+xpath_service = etree.XPath("child::port")
+
 
 def exec_xpath_query(xpath, xml):
     result = xpath(xml)[0].text
     return result
+
 
 class ReportParser():
 
@@ -19,20 +21,31 @@ class ReportParser():
     __xpath_cve = etree.XPath("child::nvt/child::cve")
     __xpath_port = etree.XPath("child::port")
 
-    class _openvas_cpe_id():
+    class _cpe_id_parser():
         def __init__(self, raw_cpe_line):
 
-            __cpe_n_port = raw_cpe_line.split('|')[1].split('#')
-            self.cpe = __cpe_n_port[0]
+            cpe_n_port = raw_cpe_line.split('|')[1].split('#')
+            self.cpe = cpe_n_port[0]
             try:
-                self.port = __cpe_n_port[1]
+                self.port = cpe_n_port[1]
             except:
                 self.port = None
 
+    class _service_parser():
+        def __init__(self, raw_service_line):
+
+            service = raw_service_line.split(' ')
+            service.reverse()
+
+            self.port = service[0].split('/')[0].strip('(')
+            self.protocol = service[0].split('/')[1].strip(')')
+
+            try:
+                self.service_name = service[-1]
+            except:
+                self.service_name = None
 
     def parse_report(self, report):
-        cpe_detection_test = "CPE detection"
-        nocve = "NOCVE"
 
         '''
         This function return dictionary.
@@ -51,6 +64,9 @@ class ReportParser():
         }
         '''
 
+        cpe_detection_test = "CPE detection"
+        nocve = "NOCVE"
+
         result_elements = etree.iterparse(BytesIO(report.encode('utf-8')), tag="result")
 
         parsed_report_dict = dict()
@@ -64,7 +80,7 @@ class ReportParser():
                 row_cpe_list = row_cpe_str.strip().splitlines()
 
                 for cpe_item in row_cpe_list:
-                    cpe_obj = self._openvas_cpe_id(cpe_item)
+                    cpe_obj = self._cpe_id_parser(cpe_item)
 
                     if not parsed_report_dict.get(host):
                         parsed_report_dict[host] = dict(cpe_list=list(), cve_list=list())
@@ -72,35 +88,26 @@ class ReportParser():
                     parsed_report_dict[host]['cpe_list'].append({'cpe': cpe_obj.cpe, 'port': cpe_obj.port})
 
             else:
-                cve_str = self.__xpath_cve(test)[0].text
-                if cve_str != nocve and cve_str != None:
+                row_cve_str = exec_xpath_query(xpath_cve, test)
 
-                    service = self.__xpath_port(test)[0].text.split(' ') #service line format before split: 'service_name (port/protocol)' or 'port/protocol',
-                                                                           #examples: 'ssh (21/tcp)', 'general/icmp'
-                                                                           #after spliting: service = ['ssh', '(21/tcp)'] or service = ['general/icmp']
-                    cves = cve_str.split(', ')
-                    print cve_str.split()
-                    
-                    if len(service) > 1:                    #like first examlpe
-                        service_name = service[0]
-                        port = service[1].split('/')[0][1:]
-                        protocol = service[1].split('/')[1][:-1]
-                    else:                                   #like second examlpe
-                        service_name = None
-                        port = service[0].split('/')[0]
-                        protocol = service[0].split('/')[1]
+                if row_cve_str == nocve or row_cve_str == None:
+                    continue
+                cve_list = [cve.strip(',') for cve in row_cve_str.split()]
 
-                    for cve in cves:
-                        if not parsed_report_dict.get(host):
-                            parsed_report_dict[host] = dict(cpe_list=list(), cve_list=list())
-                        parsed_report_dict[host]['cve_list'].append({'cve': cve,
-                                                                     'cve_description': test_name,
-                                                                     'service_name': service_name,
-                                                                     'port': port,
-                                                                     'protocol': protocol,
-                                                                     'cpe': None,
-                                                                     'possible_cpe': None,
-                                                                     'source_type': 'scan'})
+                raw_service = exec_xpath_query(xpath_service, test)
+                service = self._service_parser(raw_service)
+
+                for cve in cve_list:
+                    if not parsed_report_dict.get(host):
+                        parsed_report_dict[host] = dict(cpe_list=list(), cve_list=list())
+                    parsed_report_dict[host]['cve_list'].append({'cve': cve,
+                                                                 'cve_description': test_name,
+                                                                 'service_name': service.service_name,
+                                                                 'port': service.port,
+                                                                 'protocol': service.protocol,
+                                                                 'cpe': None,
+                                                                 'possible_cpe': None,
+                                                                 'source_type': 'scan'})
             test.clear()
         del result_elements
         
