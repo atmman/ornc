@@ -135,7 +135,8 @@ if __name__ == '__main__':
                     'user' : ('test_admin', 'admin'),
                     'targets': '10.10.133.1',
                     'config_type': CONFIG_TYPES.full_n_fast,
-                    'success_callback': on_success_test()
+                    'success_callback': on_success_test,
+                    'error_callback': on_error_test
                  }
     
     start_task(test_param)
