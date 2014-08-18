@@ -41,19 +41,17 @@ class ReportParser():
             
             if test_name == cpe_detection_test:
                 host = self.__xpath_host(result)[0].text
-                description = self.__xpath_description(result)[0].text #description field contain cpe lines
-                row_cpe_list = description.strip().splitlines()
+                row_cpe_str = self.__xpath_description(result)[0].text #row_cpe_str field contain cpe lines
+                row_cpe_list = row_cpe_str.strip().splitlines()
                 #TODO: extract method
 
-                for cpe_line in row_cpe_list:
-                    try:
-                        splited_line = cpe_line.split('|')[1] #cpe line format: 'ip-address|cpeid#port', example: '192.168.1.1|cpe:/a:nginx:nginx:0.7.67#80'
-                                                          #splited_line = 'cpe:/a:nginx:nginx:0.7.67#80' 
-                        cpe = splited_line.split('#')     #cpe = ['cpe:/a:nginx:nginx:0.7.67', '80']
-                        if len(cpe) < 2:
-                            cpe.append(None)
-                    except IndexError:
-                        break
+                for cpe_item in row_cpe_list:
+                    splited_line = cpe_item.split('|')[1] #cpe line format: 'ip-address|cpeid#port', example: '192.168.1.1|cpe:/a:nginx:nginx:0.7.67#80'
+                                                      #splited_line = 'cpe:/a:nginx:nginx:0.7.67#80'
+                    cpe = splited_line.split('#')     #cpe = ['cpe:/a:nginx:nginx:0.7.67', '80']
+                    if len(cpe) < 2:
+                        cpe.append(None)
+
 
                     if not parsed_report_dict.get(host):
                         parsed_report_dict[host] = dict(cpe_list=list(), cve_list=list())
