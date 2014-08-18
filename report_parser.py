@@ -2,17 +2,38 @@ from lxml import etree
 from io import BytesIO
 from svdb.vuln.db_reader import DB
 
+xpath_test_name = etree.XPath("child::nvt/child::name")
+xpath_host = etree.XPath("child::host")
+xpath_description = etree.XPath("child::description")
+xpath_cve = etree.XPath("child::nvt/child::cve")
+xpath_port = etree.XPath("child::port")
+
+def exec_xpath_query(xpath, xml):
+    result = xpath(xml)[0].text
+    return result
 
 class ReportParser():
 
-    __xpath_test_name = etree.XPath("child::nvt/child::name")
-    __xpath_host = etree.XPath("child::host")
+
     __xpath_description = etree.XPath("child::description")
     __xpath_cve = etree.XPath("child::nvt/child::cve")
     __xpath_port = etree.XPath("child::port")
 
+    class _openvas_cpe_id():
+        def __init__(self, raw_cpe_line):
+
+            __cpe_n_port = raw_cpe_line.split('|')[1].split('#')
+            self.cpe = __cpe_n_port[0]
+            try:
+                self.port = __cpe_n_port[1]
+            except:
+                self.port = None
+
+
     def parse_report(self, report):
         cpe_detection_test = "CPE detection"
+        nocve = "NOCVE"
+
         '''
         This function return dictionary.
         Output data structure:
@@ -29,40 +50,32 @@ class ReportParser():
                  },...,
         }
         '''
+
         result_elements = etree.iterparse(BytesIO(report.encode('utf-8')), tag="result")
 
         parsed_report_dict = dict()
     
-        for event, result in result_elements:
-            try:
-                test_name = self.__xpath_test_name(result)[0].text
-            except:
-                continue
-            
+        for event, test in result_elements:
+            host = exec_xpath_query(xpath_host, test)
+            test_name = exec_xpath_query(xpath_test_name, test)
+
             if test_name == cpe_detection_test:
-                host = self.__xpath_host(result)[0].text
-                row_cpe_str = self.__xpath_description(result)[0].text #row_cpe_str field contain cpe lines
+                row_cpe_str = exec_xpath_query(xpath_description, test)
                 row_cpe_list = row_cpe_str.strip().splitlines()
 
-                #TODO: extract method
                 for cpe_item in row_cpe_list:
-                    splited_cpe_item = cpe_item.split('|')[1] #cpe line format: 'ip-address|cpeid#port', example: '192.168.1.1|cpe:/a:nginx:nginx:0.7.67#80'
-                                                      #splited_cpe_item = 'cpe:/a:nginx:nginx:0.7.67#80'
-                    cpe = splited_cpe_item.split('#')     #cpe = ['cpe:/a:nginx:nginx:0.7.67', '80']
-                    if len(cpe) < 2:
-                        cpe.append(None)
-
+                    cpe_obj = self._openvas_cpe_id(cpe_item)
 
                     if not parsed_report_dict.get(host):
                         parsed_report_dict[host] = dict(cpe_list=list(), cve_list=list())
 
-                    parsed_report_dict[host]['cpe_list'].append({'cpe': cpe[0], 'port': cpe[1]})
+                    parsed_report_dict[host]['cpe_list'].append({'cpe': cpe_obj.cpe, 'port': cpe_obj.port})
 
             else:
-                cve_str = self.__xpath_cve(result)[0].text
-                if cve_str != "NOCVE" and cve_str != None:
-                    host = self.__xpath_host(result)[0].text
-                    service = self.__xpath_port(result)[0].text.split(' ') #service line format before split: 'service_name (port/protocol)' or 'port/protocol', 
+                cve_str = self.__xpath_cve(test)[0].text
+                if cve_str != nocve and cve_str != None:
+
+                    service = self.__xpath_port(test)[0].text.split(' ') #service line format before split: 'service_name (port/protocol)' or 'port/protocol',
                                                                            #examples: 'ssh (21/tcp)', 'general/icmp'
                                                                            #after spliting: service = ['ssh', '(21/tcp)'] or service = ['general/icmp']
                     cves = cve_str.split(', ')
@@ -88,7 +101,7 @@ class ReportParser():
                                                                      'cpe': None,
                                                                      'possible_cpe': None,
                                                                      'source_type': 'scan'})
-            result.clear()
+            test.clear()
         del result_elements
         
         parsed_report_dict = ReportParser.find_cpe_for_cve(parsed_report_dict)
