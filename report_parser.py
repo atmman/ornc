@@ -2,6 +2,7 @@ from lxml import etree
 from io import BytesIO
 from svdb.vuln.db_reader import DB
 
+
 class ReportParser():
 
     __xpath_name = etree.XPath("child::nvt/child::name")
@@ -9,9 +10,6 @@ class ReportParser():
     __xpath_description = etree.XPath("child::description")
     __xpath_cve = etree.XPath("child::nvt/child::cve")
     __xpath_port = etree.XPath("child::port")
-
-    def __init__(self):
-        pass
 
     def parse_report(self, report):
         '''
@@ -43,6 +41,8 @@ class ReportParser():
             if name == "CPE detection":
                 host = self.__xpath_host(result)[0].text
                 description = self.__xpath_description(result)[0].text #description field contain cpe lines
+                #TODO: extract method
+                print description.splitlines()
                 for line in description.splitlines():
                     try:
                         splited_line = line.split('|')[1] #cpe line format: 'ip-address|cpeid#port', example: '192.168.1.1|cpe:/a:nginx:nginx:0.7.67#80' 
@@ -52,16 +52,12 @@ class ReportParser():
                             cpe.append(None)
                     except IndexError:
                         break
-                    
-                    try:
-                        parsed_report_dict[host]['cpe_list'].append({'cpe': cpe[0], 
-                                                                     'port': cpe[1]})
-                    except:
-                        parsed_report_dict[host] = dict(cpe_list=list(), 
-                                                        cve_list=list())
-                        parsed_report_dict[host]['cpe_list'].append({'cpe': cpe[0], 
-                                                                     'port': cpe[1]})
-                        
+
+                    if not parsed_report_dict.get(host):
+                        parsed_report_dict[host] = dict(cpe_list=list(), cve_list=list())
+
+                    parsed_report_dict[host]['cpe_list'].append({'cpe': cpe[0], 'port': cpe[1]})
+
             else:
                 cve_str = self.__xpath_cve(result)[0].text
                 if cve_str != "NOCVE" and cve_str != None:
@@ -79,28 +75,18 @@ class ReportParser():
                         service_name = None
                         port = service[0].split('/')[0]
                         protocol = service[0].split('/')[1]
-                    
+
                     for cve in cves:
-                        try:
-                            parsed_report_dict[host]['cve_list'].append({'cve': cve, 
-                                                                         'cve_description': name, 
-                                                                         'service_name': service_name, 
-                                                                         'port': port, 
-                                                                         'protocol': protocol, 
-                                                                         'cpe': None, 
-                                                                         'possible_cpe': None, 
-                                                                         'source_type': 'scan'})
-                        except:
-                            parsed_report_dict[host] = dict(cpe_list=list(), 
-                                                            cve_list=list())
-                            parsed_report_dict[host]['cve_list'].append({'cve': cve, 
-                                                                         'cve_description': name, 
-                                                                         'service_name': service_name, 
-                                                                         'port': port, 
-                                                                         'protocol': protocol, 
-                                                                         'cpe': None, 
-                                                                         'possible_cpe': None, 
-                                                                         'source_type': 'scan'})
+                        if not parsed_report_dict.get(host):
+                            parsed_report_dict[host] = dict(cpe_list=list(), cve_list=list())
+                        parsed_report_dict[host]['cve_list'].append({'cve': cve,
+                                                                             'cve_description': name,
+                                                                             'service_name': service_name,
+                                                                             'port': port,
+                                                                             'protocol': protocol,
+                                                                             'cpe': None,
+                                                                             'possible_cpe': None,
+                                                                             'source_type': 'scan'})
             result.clear()
         del result_elements
         
