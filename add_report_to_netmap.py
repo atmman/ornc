@@ -10,7 +10,8 @@ def combine_netmap_report(netmap, report_dict):
                     continue
                 
                 host_dict = report_dict.get(str(interface.cidr.ip))
-
+                cve_list = host_dict['cve_list']
+                '''
                 for cpe_item in host_dict.get('cpe_list'):
                     new_service = add_service(net_object, cpe_item)
                     new_service.vulnerabilities = get_vulnerabilities(host_dict['cve_list'], new_service.cpe)
@@ -21,8 +22,10 @@ def combine_netmap_report(netmap, report_dict):
                     if cve_item.get('possible_cpe') in [service.cpe for service in net_object.services]:
                         continue
 
-                    add_service(net_object, cve_item)
+                    new_service = add_service(net_object, cve_item)
                     new_service.vulnerabilities = get_vulnerabilities(host_dict['cve_list'], new_service.cpe)
+                '''
+                for cve_item in cve_list:
 
 
     return netmap
