@@ -24,6 +24,55 @@ class ParamError(Exception):
         self.value = value
 
 
+def parse_params(parameters):
+    # Manager host
+    manager_host = parameters.get('manager_host') or '127.0.0.1'
+    print "OpenVAS Manager's host: %s" % manager_host
+    #Manager port
+    manager_port = parameters.get('manager_port')
+    #Manager user
+    user = parameters.get('user')
+    if user == None:
+        print 'Error: None user parameter'
+        sys.exit()
+
+    #Task and target name
+    task_name = parameters.get('task_name')
+    if task_name == None:
+        date = time.localtime()
+        date_name = '%i%i%i_%i%i' % (date[2], date[1], date[0], date[3], date[4])
+        task_name = 'task_' + date_name
+        target_name = task_name + '_target'
+        print "Task name: %s\nTarget name: %s" % (task_name, target_name)
+    else:
+        target_name = task_name + '_target'
+        print "Task name: %s\nTarget name: %s" % (task_name, target_name)
+
+    #Task targets
+    targets = parameters.get('targets')
+    if targets == None:
+        print 'Error: None task target parameter'
+        sys.exit()
+
+    #Task target port list
+    port_list = parameters.get('port_list') or PORT_LIST_TYPE.default
+    print 'Target port list: %s' % port_list
+    #Scan configuration
+    config_type = parameters.get('config_type')
+    if config_type == None:
+        print 'Error: None scan configuretion type parameter'
+        sys.exit()
+    print 'Scan config: %s' % config_type
+    #Callback functions
+    on_success = parameters.get('success_callback')
+    if not on_success:
+        print 'Error: None success callback-function parameter'
+        sys.exit()
+    on_error = parameters.get('error_callback')
+    on_progress = parameters.get('progress_callback')
+    return (config_type, manager_host, manager_port, on_error, on_progress, on_success, port_list, target_name, targets, task_name, user)
+
+
 def start_task(parameters):
     '''
     parameters = {
@@ -42,56 +91,9 @@ def start_task(parameters):
     '''
     if type(parameters) != type(dict()):
         sys.exit()
-        
-    #Manager host
-    manager_host = parameters.get('manager_host') or '127.0.0.1'
-    print "OpenVAS Manager's host: %s" % manager_host
-    
-    #Manager port
-    manager_port = parameters.get('manager_port')
-    
-    #Manager user 
-    user = parameters.get('user')
-    if user == None:
-        print 'Error: None user parameter'
-        sys.exit()
-    
-    #Task and target name
-    task_name = parameters.get('task_name')
-    if task_name == None:
-        date = time.localtime()
-        date_name = '%i%i%i_%i%i' % (date[2], date[1], date[0], date[3], date[4])
-        task_name = 'task_' + date_name
-        target_name = task_name + '_target'
-        print "Task name: %s\nTarget name: %s" % (task_name, target_name)
-    else:
-        target_name = task_name + '_target'
-        print "Task name: %s\nTarget name: %s" % (task_name, target_name)
-    
-    #Task targets
-    targets = parameters.get('targets')
-    if targets == None:
-        print 'Error: None task target parameter'
-        sys.exit()
 
-    #Task target port list    
-    port_list = parameters.get('port_list') or PORT_LIST_TYPE.default
-    print 'Target port list: %s' % port_list
-    
-    #Scan configuration
-    config_type = parameters.get('config_type')
-    if config_type == None:
-        print 'Error: None scan configuretion type parameter'
-        sys.exit()
-    print 'Scan config: %s' % config_type
-
-    #Callback functions
-    on_success = parameters.get('success_callback')
-    if not on_success:
-        print 'Error: None success callback-function parameter'
-        sys.exit()
-    on_error = parameters.get('error_callback')
-    on_progress = parameters.get('progress_callback')
+    (config_type, manager_host, manager_port, on_error, on_progress, on_success, port_list, target_name, targets, task_name, user) = parse_params(
+        parameters)
 
     manager = OpenvasClient(host=manager_host, port=manager_port)
     manager.open_session(user)
