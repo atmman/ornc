@@ -19,21 +19,26 @@ def combine_netmap_report(netmap, report_dict):
                 for cve_item in host_dict.get('cve_list'):
                     if not cve_item.get('possible_cpe'):
                         continue
-                    if cve_item.get('possible_cpe') in [service.cpe for service in net_object.services]:
+                    if cpe in [service.cpe for service in net_object.services]:
                         continue
 
                     new_service = add_service(net_object, cve_item)
                     new_service.vulnerabilities = get_vulnerabilities(host_dict['cve_list'], new_service.cpe)
                 '''
                 for cve_item in cve_list:
+                    add_service(net_object, cve_item)
 
 
     return netmap
 
 
-def add_service(net_object, item):
-    cpe = item.get('cpe') or item.get('possible_cpe')
-    port = item['port']
+def add_service(net_object, cve_item):
+    cpe = cve_item.get('cpe') or cve_item.get('possible_cpe')
+
+    if cpe in [service.cpe for service in net_object.services]:
+        return 0
+
+    port = cve_item['port']
 
     service = net_object.add_service()
     service.cpe = cpe
