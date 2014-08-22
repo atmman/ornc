@@ -21,8 +21,6 @@ class _service():
         service.reverse()
 
         self.port = service[0].split('/')[0].strip('(')
-        if self.port == '':
-            self.port = None
         self.protocol = service[0].split('/')[1].strip(')')
 
         if len(service) > 1:
@@ -39,6 +37,8 @@ class _cpe_id():
             self.cpe = cpe_n_port[0]
         try:
             self.port = cpe_n_port[1]
+            if self.port is '':
+                self.port = None
         except:
             self.port = None
 
