@@ -31,9 +31,10 @@ class _service():
 
 class _cpe_id():
     def __init__(self, raw_cpe_line):
-
+        from svdb.id.cpe import CPEID
         cpe_n_port = raw_cpe_line.split('|')[1].split('#')
-        self.cpe = cpe_n_port[0]
+        if CPEID.correct_cpe_str(cpe_n_port[0]):
+            self.cpe = cpe_n_port[0]
         try:
             self.port = cpe_n_port[1]
         except:
