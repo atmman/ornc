@@ -14,7 +14,7 @@ def exec_xpath_query(xpath, xml):
     return result
 
 
-class _service_parser():
+class _service():
     def __init__(self, raw_service_line):
 
         service = raw_service_line.split(' ')
@@ -29,7 +29,7 @@ class _service_parser():
             self.service_name = None
 
 
-class _cpe_id_parser():
+class _cpe_id():
     def __init__(self, raw_cpe_line):
 
         cpe_n_port = raw_cpe_line.split('|')[1].split('#')
@@ -48,7 +48,7 @@ class ReportParser():
         row_cpe_str = exec_xpath_query(xpath_description, test)
         row_cpe_list = row_cpe_str.strip().splitlines()
         for cpe_item in row_cpe_list:
-            cpe_obj = _cpe_id_parser(cpe_item)
+            cpe_obj = _cpe_id(cpe_item)
 
             if not parsed_report_dict.get(host):
                 parsed_report_dict[host] = dict(cpe_list=list(), cve_list=list())
@@ -60,7 +60,7 @@ class ReportParser():
         host = exec_xpath_query(xpath_host, test)
         cve_list = [cve.strip(',') for cve in row_cve_str.split()]
         raw_service = exec_xpath_query(xpath_service, test)
-        service = _service_parser(raw_service)
+        service = _service(raw_service)
         for cve in cve_list:
             if not parsed_report_dict.get(host):
                 parsed_report_dict[host] = dict(cpe_list=list(), cve_list=list())
