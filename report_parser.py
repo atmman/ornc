@@ -23,9 +23,9 @@ class _service():
         self.port = service[0].split('/')[0].strip('(')
         self.protocol = service[0].split('/')[1].strip(')')
 
-        try:
+        if len(service) > 1:
             self.service_name = service[-1]
-        except:
+        else:
             self.service_name = None
 
 
