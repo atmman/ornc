@@ -158,7 +158,7 @@ class ReportParser():
                 row_cve_str = exec_xpath_query(xpath_cve, result_item)
 
                 if row_cve_str != nocve and row_cve_str != None:
-                    self.add_cve_list(parsed_report_dict, row_cve_str, result_item, result_item_name)
+                    self.add_cve_list(parsed_report_dict, row_cve_str, result_item, result_item_name)#kill unusable elements
 
             result_item.clear()
         del result_elements
