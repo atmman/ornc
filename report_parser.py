@@ -21,6 +21,8 @@ class _service():
         service.reverse()
 
         self.port = service[0].split('/')[0].strip('(')
+        if self.port == '':
+            self.port = None
         self.protocol = service[0].split('/')[1].strip(')')
 
         if len(service) > 1:
@@ -43,10 +45,10 @@ class _cpe_id():
 
 class ReportParser():
 
-    def add_cpe_list(self, parsed_report_dict, test):
-        host = exec_xpath_query(xpath_host, test)
+    def add_cpe_list(self, parsed_report_dict, result_item):
+        host = exec_xpath_query(xpath_host, result_item)
 
-        row_cpe_str = exec_xpath_query(xpath_description, test)
+        row_cpe_str = exec_xpath_query(xpath_description, result_item)
         row_cpe_list = row_cpe_str.strip().splitlines()
         for cpe_item in row_cpe_list:
             cpe_obj = _cpe_id(cpe_item)
@@ -57,16 +59,16 @@ class ReportParser():
             parsed_report_dict[host]['cpe_list'].append({'cpe': cpe_obj.cpe, 'port': cpe_obj.port})
         return parsed_report_dict
 
-    def add_cve_list(self, parsed_report_dict, row_cve_str, test, test_name):
-        host = exec_xpath_query(xpath_host, test)
+    def add_cve_list(self, parsed_report_dict, row_cve_str, result_item, result_item_name):
+        host = exec_xpath_query(xpath_host, result_item)
         cve_list = [cve.strip(',') for cve in row_cve_str.split()]
-        raw_service = exec_xpath_query(xpath_service, test)
+        raw_service = exec_xpath_query(xpath_service, result_item)
         service = _service(raw_service)
         for cve in cve_list:
             if not parsed_report_dict.get(host):
                 parsed_report_dict[host] = dict(cpe_list=list(), cve_list=list())
             parsed_report_dict[host]['cve_list'].append({'cve': cve,
-                                                         'cve_description': test_name,
+                                                         'cve_description': result_item_name,
                                                          'service_name': service.service_name,
                                                          'port': service.port,
                                                          'protocol': service.protocol,
@@ -145,20 +147,20 @@ class ReportParser():
 
         parsed_report_dict = dict()
     
-        for event, test in result_elements:
+        for event, result_item in result_elements:
 
-            test_name = exec_xpath_query(xpath_test_name, test)
+            result_item_name = exec_xpath_query(xpath_test_name, result_item)
 
-            if test_name == cpe_detection_test:
-                self.add_cpe_list(parsed_report_dict, test)
+            if result_item_name == cpe_detection_test:
+                self.add_cpe_list(parsed_report_dict, result_item)
 
             else:
-                row_cve_str = exec_xpath_query(xpath_cve, test)
+                row_cve_str = exec_xpath_query(xpath_cve, result_item)
 
                 if row_cve_str != nocve and row_cve_str != None:
-                    self.add_cve_list(parsed_report_dict, row_cve_str, test, test_name)
+                    self.add_cve_list(parsed_report_dict, row_cve_str, result_item, result_item_name)
 
-            test.clear()
+            result_item.clear()
         del result_elements
         
         self.find_cpe_for_cve(parsed_report_dict)
