@@ -167,3 +167,5 @@ class ReportParser():
         self.append_cve_by_cpe(parsed_report_dict)
         
         return parsed_report_dict
+        
+        dasdasdas
